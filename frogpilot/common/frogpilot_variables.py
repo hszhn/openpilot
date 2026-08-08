@@ -224,7 +224,7 @@ frogpilot_default_params: list[tuple[str, str | bytes, int, str]] = [
   ("CustomIcons", "frog-animated", 0, "stock"),
   ("CustomPersonalities", "0", 2, "0"),
   ("CustomSignals", "frog", 0, "stock"),
-  ("CustomSounds", "frog", 0, "stock"),
+  ("CustomSounds", "tesla", 0, "stock"),
   ("CustomUI", "1", 1, "0"),
   ("DecelerationProfile", "1", 2, "0"),
   ("DeveloperMetrics", "1", 3, "0"),

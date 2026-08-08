@@ -19,6 +19,7 @@ DOWNLOAD_PROGRESS_PARAM = "ThemeDownloadProgress"
 
 HOLIDAY_THEME_PATH = Path(__file__).parent / "holiday_themes"
 STOCKOP_THEME_PATH = Path(__file__).parent / "stock_theme"
+TESLA_THEME_PATH = Path(__file__).parent / "tesla_theme"
 
 HOLIDAY_SLUGS = {
   "new_years": "New Year's",
@@ -92,6 +93,11 @@ class ThemeManager:
     steering_wheel_save_path = THEME_SAVE_PATH / "steering_wheels/frog.png"
     steering_wheel_save_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(steering_wheel_image_path, steering_wheel_save_path)
+
+    tesla_sounds_path = TESLA_THEME_PATH / "sounds"
+    tesla_sounds_save_path = THEME_SAVE_PATH / "theme_packs/tesla/sounds"
+    tesla_sounds_save_path.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(tesla_sounds_path, tesla_sounds_save_path, dirs_exist_ok=True)
 
   def download_theme(self, theme_component, theme_name, asset_param, frogpilot_toggles):
     self.downloading_theme = True
