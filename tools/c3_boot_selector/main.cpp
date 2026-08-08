@@ -1,17 +1,24 @@
 #include <QApplication>
 #include <QFile>
 #include <QFont>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPlatformSurfaceEvent>
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QWindow>
+
+#include <qpa/qplatformnativeinterface.h>
+#include <wayland-client-protocol.h>
 
 namespace {
 constexpr int kStableExitCode = 10;
 constexpr int kLegacyExitCode = 20;
 constexpr int kTimeoutSeconds = 10;
+const QSize kScreenSize = {2160, 1080};
 
 QString readActiveVersion() {
   QFile state_file("/data/c3_boot_selector/active_version");
@@ -19,6 +26,22 @@ QString readActiveVersion() {
     return QString::fromUtf8(state_file.readAll()).trimmed();
   }
   return "stable";
+}
+
+void showLandscape(QWidget *window) {
+  window->setFixedSize(kScreenSize);
+  window->show();
+
+  if (QGuiApplication::platformName().startsWith("wayland")) {
+    QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+    wl_surface *surface = reinterpret_cast<wl_surface *>(native->nativeResourceForWindow("surface", window->windowHandle()));
+    wl_surface_set_buffer_transform(surface, WL_OUTPUT_TRANSFORM_270);
+    wl_surface_commit(surface);
+    window->setWindowState(Qt::WindowFullScreen);
+    window->setVisible(true);
+  } else {
+    window->showFullScreen();
+  }
 }
 }  // namespace
 
@@ -90,6 +113,6 @@ int main(int argc, char *argv[]) {
   });
   timer.start(1000);
 
-  window.showFullScreen();
+  showLandscape(&window);
   return app.exec();
 }
