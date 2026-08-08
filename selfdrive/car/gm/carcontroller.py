@@ -36,6 +36,7 @@ class CarController(CarControllerBase):
     self.apply_gas = 0
     self.apply_brake = 0
     self.apply_speed = 0
+    self.cslc_smoothed_set_speed = None
     self.frame = 0
     self.last_steer_frame = 0
     self.last_button_frame = 0
@@ -80,6 +81,9 @@ class CarController(CarControllerBase):
     hud_v_cruise = hud_control.setSpeed
     if hud_v_cruise > 70:
       hud_v_cruise = 0
+
+    if not CC.enabled:
+      self.cslc_smoothed_set_speed = None
 
     # Send CAN commands.
     can_sends = []

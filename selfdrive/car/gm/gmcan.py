@@ -258,20 +258,30 @@ def create_gm_cc_spam_command(packer, controller, CS, actuators):
 def create_gm_acc_spam_command(packer, controller, CS, slc_set, bus, accel, experimental_mode, sdgm, frogpilot_toggles):
   cruiseBtn = CruiseButtons.INIT
   byfive = 0
+  envision_cslc = controller.CP.carFingerprint == CAR.BUICK_BABYENCLAVE
 
   MS_CONVERT = CV.MS_TO_KPH if frogpilot_toggles.is_metric else CV.MS_TO_MPH
 
   speedSetPoint = int(round(CS.out.cruiseState.speed * MS_CONVERT))
   slc_set = int(round(slc_set * MS_CONVERT))
 
-  FRAMES_ON = 6
-  FRAMES_OFF = (30 if sdgm else 12) - FRAMES_ON
+  FRAMES_ON = 3 if envision_cslc else 6
+  FRAMES_OFF = 47 if envision_cslc else (30 if sdgm else 12) - FRAMES_ON
 
   if not experimental_mode:
     if slc_set + 5 < CS.out.vEgo * MS_CONVERT:
       slc_set = slc_set - 10 # 10 lower to increase deceleration until with 5
   else:
-    slc_set = int(round((CS.out.vEgo * 1.01 + 4.6 * accel + 0.7 * accel ** 3 - 1 / 35 * accel ** 5) * MS_CONVERT)) # 1.01 factor to match cluster speed better
+    raw_slc_set = (CS.out.vEgo * 1.01 + 4.6 * accel + 0.7 * accel ** 3 - 1 / 35 * accel ** 5) * MS_CONVERT # 1.01 factor to match cluster speed better
+    if envision_cslc:
+      if controller.cslc_smoothed_set_speed is None:
+        controller.cslc_smoothed_set_speed = speedSetPoint
+      controller.cslc_smoothed_set_speed += 0.03 * (raw_slc_set - controller.cslc_smoothed_set_speed)
+      slc_set = int(round(controller.cslc_smoothed_set_speed))
+    else:
+      slc_set = int(round(raw_slc_set))
+
+  speed_deadband = 1 if envision_cslc else 0
 
   if slc_set <= int(math.floor((speedSetPoint - 1)/5.0)*5.0) and speedSetPoint > (25 if frogpilot_toggles.is_metric else 20) and sdgm:
     cruiseBtn = CruiseButtons.DECEL_SET
@@ -279,10 +289,10 @@ def create_gm_acc_spam_command(packer, controller, CS, slc_set, bus, accel, expe
   elif slc_set >= int(math.ceil((speedSetPoint + 1)/5.0)*5.0) and sdgm:
     cruiseBtn = CruiseButtons.RES_ACCEL
     byfive = 1
-  elif slc_set < speedSetPoint and speedSetPoint > (25 if frogpilot_toggles.is_metric else 16):
+  elif slc_set < speedSetPoint - speed_deadband and speedSetPoint > (25 if frogpilot_toggles.is_metric else 16):
     cruiseBtn = CruiseButtons.DECEL_SET
     byfive = 0
-  elif slc_set > speedSetPoint:
+  elif slc_set > speedSetPoint + speed_deadband:
     cruiseBtn = CruiseButtons.RES_ACCEL
     byfive = 0
   else:
