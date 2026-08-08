@@ -7,7 +7,7 @@ from openpilot.common.params_pyx import Params
 from opendbc.can.packer import CANPacker
 from openpilot.selfdrive.car import apply_driver_steer_torque_limits, create_gas_interceptor_command
 from openpilot.selfdrive.car.gm import gmcan
-from openpilot.selfdrive.car.gm.values import DBC, CanBus, CarControllerParams, CruiseButtons, GMFlags, CAMERA_ACC_CAR, CC_ONLY_CAR, SDGM_CAR, EV_CAR
+from openpilot.selfdrive.car.gm.values import DBC, CanBus, CarControllerParams, CruiseButtons, GMFlags, CAMERA_ACC_CAR, CC_ONLY_CAR, SDGM_CAR, EV_CAR, CAR
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from openpilot.selfdrive.controls.lib.drive_helpers import apply_deadzone, V_CRUISE_MAX
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
@@ -48,6 +48,12 @@ class CarController(CarControllerBase):
 
     self.params = CarControllerParams(self.CP)
     self.params_ = Params()
+
+    self.envision_lane_change_params = None
+    if self.CP.carFingerprint == CAR.BUICK_BABYENCLAVE:
+      self.envision_lane_change_params = CarControllerParams(self.CP)
+      self.envision_lane_change_params.STEER_DELTA_UP = 5
+      self.envision_lane_change_params.STEER_DELTA_DOWN = 10
 
     self.packer_pt = CANPacker(DBC[self.CP.carFingerprint]['pt'])
     self.packer_obj = CANPacker(DBC[self.CP.carFingerprint]['radar'])
@@ -112,7 +118,9 @@ class CarController(CarControllerBase):
 
       if CC.latActive:
         new_steer = int(round(actuators.steer * self.params.STEER_MAX))
-        apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.params)
+        steer_params = self.envision_lane_change_params if self.envision_lane_change_params is not None and \
+          (CC.leftBlinker or CC.rightBlinker) else self.params
+        apply_steer = apply_driver_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, steer_params)
       else:
         apply_steer = 0
 
