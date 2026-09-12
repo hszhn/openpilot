@@ -5,7 +5,7 @@ from openpilot.common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from openpilot.selfdrive.car.interfaces import CarStateBase
-from openpilot.selfdrive.car.gm.values import CAR, DBC, AccState, CanBus, STEER_THRESHOLD, GMFlags, CC_ONLY_CAR, CAMERA_ACC_CAR, SDGM_CAR
+from openpilot.selfdrive.car.gm.values import CAR, DBC, AccState, CanBus, STEER_THRESHOLD, GMFlags, CC_ONLY_CAR, CAMERA_ACC_CAR, SDGM_CAR, BUICK_ENVISION_CAR
 
 TransmissionType = car.CarParams.TransmissionType
 NetworkLocation = car.CarParams.NetworkLocation
@@ -14,7 +14,7 @@ STANDSTILL_THRESHOLD = 10 * 0.0311 * CV.KPH_TO_MS
 
 
 def is_non_adaptive_cruise(car_fingerprint, cruise_enabled, acc_cruise_state, acc_cmd_active):
-  if car_fingerprint == CAR.BUICK_BABYENCLAVE:
+  if car_fingerprint in BUICK_ENVISION_CAR:
     # This 2015 Envision always reports ACCCruiseState=0, while ACCCmdActive
     # reliably identifies when its factory ACC is active.
     return cruise_enabled and not acc_cmd_active

@@ -225,6 +225,10 @@ class CAR(Platforms):
     [GMCarDocs("Buick Baby Enclave 2020-23", "Driver Assist Package")],
     CarSpecs(mass=2050, wheelbase=2.86, steerRatio=16.0, centerToFrontRatio=0.5),
   )
+  BUICK_ENVISION_2015 = GMPlatformConfig(
+    [GMCarDocs("Buick Envision 2015", "Driver Assist Package")],
+    CarSpecs(mass=2050, wheelbase=2.86, steerRatio=16.0, centerToFrontRatio=0.5),
+  )
   CHEVROLET_MALIBU_CC = GMPlatformConfig(
     [GMCarDocs("Chevrolet Malibu 2023 - No-ACC")],
     CarSpecs(mass=1450, wheelbase=2.8, steerRatio=15.8, centerToFrontRatio=0.4),
@@ -317,8 +321,12 @@ EV_CAR = {CAR.CHEVROLET_VOLT, CAR.CHEVROLET_BOLT_EUV, CAR.CHEVROLET_VOLT_CC, CAR
 CC_ONLY_CAR = {CAR.CHEVROLET_VOLT_CC, CAR.CHEVROLET_BOLT_CC, CAR.CHEVROLET_EQUINOX_CC, CAR.CHEVROLET_SUBURBAN_CC, CAR.GMC_YUKON_CC, CAR.CADILLAC_CT6_CC, CAR.CHEVROLET_TRAILBLAZER_CC, CAR.CADILLAC_XT5_CC, CAR.CHEVROLET_MALIBU_CC}
 # CC_ONLY_CAR = set(c for c in CAR if str(c).endswith('_CC'))
 
+# Vehicle-specific Envision behavior also accepts the former development name so
+# existing installs and cached CarParams remain usable after updating.
+BUICK_ENVISION_CAR = {CAR.BUICK_ENVISION_2015, CAR.BUICK_BABYENCLAVE}
+
 # We're integrated at the Safety Data Gateway Module on these cars
-SDGM_CAR = {CAR.CADILLAC_XT4, CAR.CHEVROLET_TRAVERSE, CAR.BUICK_BABYENCLAVE}
+SDGM_CAR = {CAR.CADILLAC_XT4, CAR.CHEVROLET_TRAVERSE, *BUICK_ENVISION_CAR}
 
 # We're integrated at the camera with VOACC on these cars (instead of ASCM w/ OBD-II harness)
 CAMERA_ACC_CAR = {CAR.CHEVROLET_BOLT_EUV, CAR.CHEVROLET_SILVERADO, CAR.CHEVROLET_EQUINOX, CAR.CHEVROLET_TRAILBLAZER, CAR.CHEVROLET_TRAX}

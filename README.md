@@ -203,6 +203,16 @@ And lots more! From safety enhancements to personalization options, **FrogPilot*
 🧰 How to Install
 ------
 
+### 2015 Buick Envision C3 build
+
+This repository contains a vehicle-specific branch for the owner's 2015 Buick Envision. On a comma 3 custom software screen, use:
+
+```text
+installer.comma.ai/hszhn/C3-2015-Envision
+```
+
+Read [the 2015 Envision maintenance baseline](docs/C3_2015_ENVISION.md) before updating or road testing. This build is not intended for other vehicles.
+
 The easiest way to install **FrogPilot** is by entering this URL on the installation screen:
 
 ```

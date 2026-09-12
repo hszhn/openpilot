@@ -7,7 +7,7 @@ from panda import Panda
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car import create_button_events, get_safety_config
 from openpilot.selfdrive.car.gm.radar_interface import RADAR_HEADER_MSG
-from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, EV_CAR, CAMERA_ACC_CAR, CanBus, GMFlags, CC_ONLY_CAR, SDGM_CAR
+from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, EV_CAR, CAMERA_ACC_CAR, CanBus, GMFlags, CC_ONLY_CAR, SDGM_CAR, BUICK_ENVISION_CAR
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase, TorqueFromLateralAccelCallbackType, FRICTION_THRESHOLD, LateralAccelFromTorqueCallbackType
 from openpilot.selfdrive.controls.lib.drive_helpers import get_friction
 
@@ -260,7 +260,7 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = 10 * CV.KPH_TO_MS
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
-    elif candidate == CAR.BUICK_BABYENCLAVE:
+    elif candidate in BUICK_ENVISION_CAR:
       ret.steerActuatorDelay = 0.2
       ret.minSteerSpeed = 10 * CV.KPH_TO_MS
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)

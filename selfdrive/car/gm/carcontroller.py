@@ -7,7 +7,7 @@ from openpilot.common.params_pyx import Params
 from opendbc.can.packer import CANPacker
 from openpilot.selfdrive.car import apply_driver_steer_torque_limits, create_gas_interceptor_command
 from openpilot.selfdrive.car.gm import gmcan
-from openpilot.selfdrive.car.gm.values import DBC, CanBus, CarControllerParams, CruiseButtons, GMFlags, CAMERA_ACC_CAR, CC_ONLY_CAR, SDGM_CAR, EV_CAR, CAR
+from openpilot.selfdrive.car.gm.values import DBC, CanBus, CarControllerParams, CruiseButtons, GMFlags, CAMERA_ACC_CAR, CC_ONLY_CAR, SDGM_CAR, EV_CAR, CAR, BUICK_ENVISION_CAR
 from openpilot.selfdrive.car.interfaces import CarControllerBase
 from openpilot.selfdrive.controls.lib.drive_helpers import apply_deadzone, V_CRUISE_MAX
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
@@ -50,7 +50,7 @@ class CarController(CarControllerBase):
     self.params_ = Params()
 
     self.envision_lane_change_params = None
-    if self.CP.carFingerprint == CAR.BUICK_BABYENCLAVE:
+    if self.CP.carFingerprint in BUICK_ENVISION_CAR:
       self.envision_lane_change_params = CarControllerParams(self.CP)
       self.envision_lane_change_params.STEER_DELTA_UP = 5
       self.envision_lane_change_params.STEER_DELTA_DOWN = 10

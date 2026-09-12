@@ -23,9 +23,10 @@ class TestGMFingerprint:
 
 class TestGMCruiseState:
   @parameterized.expand([
-    ("envision_cruise_off", CAR.BUICK_BABYENCLAVE, False, 0, False, False),
-    ("envision_acc_active", CAR.BUICK_BABYENCLAVE, True, 0, True, False),
-    ("envision_non_acc_active", CAR.BUICK_BABYENCLAVE, True, 0, False, True),
+    ("envision_cruise_off", CAR.BUICK_ENVISION_2015, False, 0, False, False),
+    ("envision_acc_active", CAR.BUICK_ENVISION_2015, True, 0, True, False),
+    ("envision_non_acc_active", CAR.BUICK_ENVISION_2015, True, 0, False, True),
+    ("legacy_envision_acc_active", CAR.BUICK_BABYENCLAVE, True, 0, True, False),
     ("standard_adaptive", "OTHER_GM", True, 2, False, False),
     ("standard_non_adaptive", "OTHER_GM", True, 4, True, True),
   ])

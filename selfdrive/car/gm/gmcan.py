@@ -4,7 +4,7 @@ from cereal import log
 from openpilot.common.conversions import Conversions as CV
 from openpilot.common.realtime import DT_CTRL
 from openpilot.selfdrive.car import make_can_msg
-from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CanBus
+from openpilot.selfdrive.car.gm.values import CAR, CruiseButtons, CanBus, BUICK_ENVISION_CAR
 
 
 def create_buttons(packer, bus, idx, button):
@@ -258,7 +258,7 @@ def create_gm_cc_spam_command(packer, controller, CS, actuators):
 def create_gm_acc_spam_command(packer, controller, CS, slc_set, bus, accel, experimental_mode, sdgm, frogpilot_toggles):
   cruiseBtn = CruiseButtons.INIT
   byfive = 0
-  envision_cslc = controller.CP.carFingerprint == CAR.BUICK_BABYENCLAVE
+  envision_cslc = controller.CP.carFingerprint in BUICK_ENVISION_CAR
 
   MS_CONVERT = CV.MS_TO_KPH if frogpilot_toggles.is_metric else CV.MS_TO_MPH
 
