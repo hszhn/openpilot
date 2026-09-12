@@ -68,7 +68,11 @@ void DriveStats::updateStatsForLabel(double routes, double meters, double second
 }
 
 void DriveStats::updateStats() {
-  const QJsonObject stats = QJsonDocument::fromJson(QByteArray::fromStdString(params.get("FrogPilotStats"))).object();
+  QByteArray stats_json = QByteArray::fromStdString(params.get("FrogPilotStats"));
+  if (stats_json.isEmpty()) {
+    stats_json = QByteArray::fromStdString(params.get("ApiCache_DriveStats"));
+  }
+  const QJsonObject stats = QJsonDocument::fromJson(stats_json).object();
 
   const double total_routes = stats.contains("FrogPilotDrives") ? stats.value("FrogPilotDrives").toDouble() : params.getInt("FrogPilotDrives");
   const double total_meters = stats.contains("FrogPilotMeters") ? stats.value("FrogPilotMeters").toDouble() : params.getFloat("FrogPilotKilometers") * 1000;

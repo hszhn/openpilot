@@ -43,6 +43,7 @@ GitHub 分支：`hszhn/openpilot` 的 `C3-2015-Envision`。原始 `ENVISION/f893
 
 - 左侧“全部行驶统计”直接读取本机 `FrogPilotStats`，并从旧版 `/cache/tracking` 自动迁移总次数、总里程和总时间。
 - “过去一周”从本机 `DailyDriveStats` 按日汇总，只保留当天及前 6 天，不依赖 comma 云端。改版前未保存速度的旧日志不做距离估算。
+- 旧版 `ENVISION/f89392b` 兼容补丁将本地日统计保存在原有 `ApiCache_DriveStats` 参数中；该参数不再存放 comma API 响应。
 - 右侧保留驾驶模式按钮，移除 comma prime 订阅和 uploading 提示。
 - 右侧状态区显示车型识别、控制就绪、设备温度、风扇转速和可用存储。
 - 系统请求散热但风扇仍为 `0 RPM` 时，首页必须显示红色故障。
