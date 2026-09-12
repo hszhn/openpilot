@@ -48,6 +48,26 @@ GitHub 分支：`hszhn/openpilot` 的 `C3-2015-Envision`。原始 `ENVISION/f893
 - 右侧状态区显示车型识别、控制就绪、设备温度、风扇转速和可用存储。
 - 系统请求散热但风扇仍为 `0 RPM` 时，首页必须显示红色故障。
 
+## 旧版驾驶控制全汉化
+
+2026-09-12 已在旧 `ENVISION/f89392b` 上完成“驾驶控制”及全部下级设置汉化，覆盖标题、说明、动态标签、时间单位和警告弹窗，不修改车辆控制参数。
+
+- 原始 UI SHA256：`f4eeb80b4dbb2eea07c724939c7a21d7909c688863ad28cc751339cc0a5792f1`
+- 汉化 UI SHA256：`231bb8239212d00c4f75c44b151736c1813d54538d2ea668b66fec438c9881b1`
+- 生成工具：`tools/envision/patch_legacy_controls_zh.py`
+- C3 原始备份：`/data/openpilot/selfdrive/ui/ui.before-controls-zh-20260912`
+- C3 局部汉化备份：`/data/openpilot/selfdrive/ui/ui.before-complete-zh-20260912`
+
+该工具只接受上述原始哈希，输入不匹配会立即退出，防止误改其它 UI 版本：
+
+```bash
+python3 tools/envision/patch_legacy_controls_zh.py \
+  /data/openpilot/selfdrive/ui/ui.before-controls-zh-20260912 \
+  /tmp/ui.controls-zh-complete
+```
+
+安装前必须确认车辆停稳并处于 P 挡、`IsOnroad=0`，校验输出哈希后再替换 UI。模型名称和 `mph`/`kph` 等标准单位保持原样；内部参数键不翻译，以免影响设置读取和保存。
+
 ## 散热安全条件
 
 风扇是必要硬件，不得通过提高温度上限规避故障。
