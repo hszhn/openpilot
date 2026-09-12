@@ -1,6 +1,8 @@
-#include "selfdrive/ui/qt/request_repeater.h"
-
 #include "frogpilot/ui/qt/widgets/drive_stats.h"
+
+#include <QDate>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 static QLabel *newLabel(const QString &text, const QString &type) {
   QLabel *label = new QLabel(text);
@@ -10,21 +12,12 @@ static QLabel *newLabel(const QString &text, const QString &type) {
 
 DriveStats::DriveStats(QWidget *parent) : QFrame(parent) {
   isMetric = params.getBool("IsMetric");
-  konik = useKonikServer();
 
   QVBoxLayout *main_layout = new QVBoxLayout(this);
   main_layout->setContentsMargins(50, 25, 50, 20);
 
-  addStatsLayouts(konik ? tr("ALL TIME (KONIK)") : tr("ALL TIME"), all);
-  addStatsLayouts(konik ? tr("PAST WEEK (KONIK)") : tr("PAST WEEK"), week);
-  addStatsLayouts(tr("FROGPILOT"), frogPilot, true);
-
-  std::optional<QString> dongleId = getDongleId();
-  if (dongleId.has_value()) {
-    QString url = CommaApi::BASE_URL + "/v1.1/devices/" + dongleId.value() + "/stats";
-    RequestRepeater *repeater = new RequestRepeater(this, url, "ApiCache_DriveStats", 30);
-    QObject::connect(repeater, &RequestRepeater::requestDone, this, &DriveStats::parseResponse);
-  }
+  addStatsLayouts(tr("ALL TIME"), all, true);
+  addStatsLayouts(tr("PAST WEEK"), week);
 
   setStyleSheet(R"(
     DriveStats {
@@ -67,42 +60,34 @@ void DriveStats::addStatsLayouts(const QString &title, StatsLabels &labels, bool
   main_layout->addStretch(1);
 }
 
-void DriveStats::parseResponse(const QString &response, bool success) {
-  if (!success) {
-    return;
-  }
-
-  QJsonDocument doc = QJsonDocument::fromJson(response.trimmed().toUtf8());
-  if (doc.isNull()) {
-    qDebug() << "JSON Parse failed on getting past drives statistics";
-    return;
-  }
-  stats = doc;
-  updateStats();
-}
-
-void DriveStats::updateStatsForLabel(const QJsonObject &obj, StatsLabels &labels) {
-  labels.distance->setText(QString::number(int(obj["distance"].toDouble() * (isMetric ? MILE_TO_KM : 1))));
+void DriveStats::updateStatsForLabel(double routes, double meters, double seconds, StatsLabels &labels) {
+  labels.distance->setText(QString::number(int(meters * (isMetric ? 0.001 : METER_TO_MILE))));
   labels.distance_unit->setText(isMetric ? tr("KM") : tr("Miles"));
-  labels.hours->setText(QString::number((int)(obj["minutes"].toDouble() / 60)));
-  labels.routes->setText(QString::number((int)obj["routes"].toDouble()));
-}
-
-void DriveStats::updateFrogPilotStatsForLabel(StatsLabels &labels) {
-  QJsonObject frogpilot_stats = QJsonDocument::fromJson(QByteArray::fromStdString(params.get("FrogPilotStats"))).object();
-
-  labels.distance->setText(QString::number(int(frogpilot_stats.value("FrogPilotMeters").toDouble() * (isMetric ? 0.001 : METER_TO_MILE))));
-  labels.distance_unit->setText(isMetric ? tr("KM") : tr("Miles"));
-  labels.hours->setText(QString::number(int(frogpilot_stats.value("FrogPilotSeconds").toDouble() / (60 * 60))));
-  labels.routes->setText(QString::number(frogpilot_stats.value("FrogPilotDrives").toInt()));
+  labels.hours->setText(QString::number(int(seconds / (60 * 60))));
+  labels.routes->setText(QString::number(int(routes)));
 }
 
 void DriveStats::updateStats() {
-  QJsonObject json = stats.object();
+  const QJsonObject stats = QJsonDocument::fromJson(QByteArray::fromStdString(params.get("FrogPilotStats"))).object();
 
-  updateStatsForLabel(json["all"].toObject(), all);
-  updateStatsForLabel(json["week"].toObject(), week);
-  updateFrogPilotStatsForLabel(frogPilot);
+  const double total_routes = stats.contains("FrogPilotDrives") ? stats.value("FrogPilotDrives").toDouble() : params.getInt("FrogPilotDrives");
+  const double total_meters = stats.contains("FrogPilotMeters") ? stats.value("FrogPilotMeters").toDouble() : params.getFloat("FrogPilotKilometers") * 1000;
+  const double total_seconds = stats.contains("FrogPilotSeconds") ? stats.value("FrogPilotSeconds").toDouble() : params.getFloat("FrogPilotMinutes") * 60;
+  updateStatsForLabel(total_routes, total_meters, total_seconds, all);
 
-  params.putIntNonBlocking(konik ? "KonikMinutes" : "openpilotMinutes", json["all"].toObject()["minutes"].toDouble());
+  double week_routes = 0;
+  double week_meters = 0;
+  double week_seconds = 0;
+  const QDate cutoff = QDate::currentDate().addDays(-6);
+  const QJsonObject daily_stats = stats.value("DailyDriveStats").toObject();
+  for (auto it = daily_stats.constBegin(); it != daily_stats.constEnd(); ++it) {
+    const QDate date = QDate::fromString(it.key(), Qt::ISODate);
+    if (date.isValid() && date >= cutoff) {
+      const QJsonObject day = it.value().toObject();
+      week_routes += day.value("drives").toDouble();
+      week_meters += day.value("meters").toDouble();
+      week_seconds += day.value("seconds").toDouble();
+    }
+  }
+  updateStatsForLabel(week_routes, week_meters, week_seconds, week);
 }

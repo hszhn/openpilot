@@ -18,21 +18,13 @@ public:
 private:
   void addStatsLayouts(const QString &title, StatsLabels &labels, bool FrogPilot = false);
   void showEvent(QShowEvent *event) override;
-  void updateFrogPilotStatsForLabel(StatsLabels &labels);
   void updateStats();
-  void updateStatsForLabel(const QJsonObject &obj, StatsLabels &labels);
+  void updateStatsForLabel(double routes, double meters, double seconds, StatsLabels &labels);
 
   bool isMetric;
-  bool konik;
 
   Params params;
 
-  QJsonDocument stats;
-
   StatsLabels all;
-  StatsLabels frogPilot;
   StatsLabels week;
-
-private slots:
-  void parseResponse(const QString &response, bool success);
 };

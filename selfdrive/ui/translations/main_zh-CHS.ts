@@ -437,7 +437,7 @@
     </message>
     <message>
         <source>ALL TIME</source>
-        <translation type="gpt-5-generated">始终</translation>
+        <translation>全部行驶统计</translation>
     </message>
     <message>
         <source>PAST WEEK (KONIK)</source>
@@ -445,7 +445,7 @@
     </message>
     <message>
         <source>PAST WEEK</source>
-        <translation type="gpt-5-generated">过去一周</translation>
+        <translation>过去一周</translation>
     </message>
 </context>
 <context>

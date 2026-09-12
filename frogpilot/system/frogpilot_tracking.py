@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import datetime
 import json
 
 from cereal import log
 from openpilot.common.conversions import Conversions as CV
+from openpilot.common.params import Params
 from openpilot.common.realtime import DT_MDL
 from openpilot.selfdrive.controls.controlsd import ACTIVE_STATES, FrogPilotEventName, State
 from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
@@ -22,6 +24,17 @@ class FrogPilotTracking:
     self.frogpilot_weather = frogpilot_planner.frogpilot_weather
 
     self.frogpilot_stats = json.loads(params.get("FrogPilotStats") or "{}")
+
+    # Preserve totals collected by the legacy C3 installation on first boot.
+    legacy_tracking = Params("/cache/tracking")
+    legacy_drives = legacy_tracking.get_int("FrogPilotDrives")
+    legacy_meters = legacy_tracking.get_float("FrogPilotKilometers") * 1000
+    legacy_seconds = legacy_tracking.get_float("FrogPilotMinutes") * 60
+    if legacy_drives or legacy_meters or legacy_seconds:
+      self.frogpilot_stats.setdefault("FrogPilotDrives", legacy_drives)
+      self.frogpilot_stats.setdefault("FrogPilotMeters", legacy_meters)
+      self.frogpilot_stats.setdefault("FrogPilotSeconds", legacy_seconds)
+
     self.frogpilot_stats.setdefault("AOLTime", self.frogpilot_stats.get("TotalAOLTime", 0))
     self.frogpilot_stats.setdefault("LateralTime", self.frogpilot_stats.get("TotalLateralTime", 0))
     self.frogpilot_stats.setdefault("LongitudinalTime", self.frogpilot_stats.get("TotalLongitudinalTime", 0))
@@ -71,6 +84,16 @@ class FrogPilotTracking:
     distance_driven = v_ego * DT_MDL
     self.previously_enabled |= sm["controlsState"].enabled or sm["frogpilotCarState"].alwaysOnLateralEnabled
     self.tracked_time += DT_MDL
+
+    if time_validated:
+      date_key = now.date().isoformat()
+      daily_stats = self.frogpilot_stats.setdefault("DailyDriveStats", {})
+      day = daily_stats.setdefault(date_key, {"drives": 0, "meters": 0, "seconds": 0})
+      day["meters"] += distance_driven
+      day["seconds"] += DT_MDL
+
+      cutoff = (now.date() - datetime.timedelta(days=7)).isoformat()
+      self.frogpilot_stats["DailyDriveStats"] = {date: values for date, values in daily_stats.items() if date > cutoff}
 
     if sm["controlsState"].alertType not in (self.previous_alert, ""):
       alert_name = sm["controlsState"].alertType.split('/')[0]
@@ -198,6 +221,8 @@ class FrogPilotTracking:
 
       if not self.drive_added:
         self.frogpilot_stats["FrogPilotDrives"] = self.frogpilot_stats.get("FrogPilotDrives", 0) + 1
+        if time_validated:
+          self.frogpilot_stats["DailyDriveStats"][now.date().isoformat()]["drives"] += 1
         self.drive_added = True
 
       params.put_nonblocking("FrogPilotStats", json.dumps(self.frogpilot_stats))
