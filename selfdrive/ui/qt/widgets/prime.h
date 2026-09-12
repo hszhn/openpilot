@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "common/params.h"
 #include "selfdrive/ui/qt/widgets/input.h"
 
 // pairing QR code
@@ -64,10 +65,13 @@ signals:
   void openSettings(int index = 0, const QString &param = "");
 
 private:
-  PairingPopup *popup;
-  QStackedWidget *mainLayout;
-  PrimeUserWidget *primeUser;
+  void refreshStatus();
+  void setStatus(QLabel *label, const QString &text, const QString &color = "#FFFFFF");
 
-private slots:
-  void replyFinished(const QString &response, bool success);
+  Params params;
+  QLabel *carRecognition;
+  QLabel *controlsReady;
+  QLabel *deviceTemperature;
+  QLabel *fanStatus;
+  QLabel *storageStatus;
 };

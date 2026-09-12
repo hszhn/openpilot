@@ -5736,6 +5736,58 @@ This may take up to a minute.</source>
 <context>
     <name>SetupWidget</name>
     <message>
+        <source>Vehicle Status</source>
+        <translation>车辆状态</translation>
+    </message>
+    <message>
+        <source>Vehicle</source>
+        <translation>车型</translation>
+    </message>
+    <message>
+        <source>Control System</source>
+        <translation>控制系统</translation>
+    </message>
+    <message>
+        <source>Device Status</source>
+        <translation>设备状态</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation>设备温度</translation>
+    </message>
+    <message>
+        <source>Cooling Fan</source>
+        <translation>散热风扇</translation>
+    </message>
+    <message>
+        <source>Storage Available</source>
+        <translation>可用存储</translation>
+    </message>
+    <message>
+        <source>2015 Buick Envision</source>
+        <translation>2015 别克昂科威</translation>
+    </message>
+    <message>
+        <source>Not Recognized</source>
+        <translation>未识别</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>已就绪</translation>
+    </message>
+    <message>
+        <source>Waiting for Vehicle</source>
+        <translation>等待车辆启动</translation>
+    </message>
+    <message>
+        <source>Waiting for Data</source>
+        <translation>等待数据</translation>
+    </message>
+    <message>
+        <source>FAULT - 0 RPM</source>
+        <translation>故障 - 0 RPM</translation>
+    </message>
+    <message>
         <source>Finish Setup</source>
         <translation>完成设置</translation>
     </message>

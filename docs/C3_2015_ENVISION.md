@@ -39,6 +39,13 @@ GitHub 分支：`hszhn/openpilot` 的 `C3-2015-Envision`。原始 `ENVISION/f893
 5. 开启原车巡航主开关后，`cruiseState.available=True`。
 6. 实际 SET 后不得出现 `wrongCruiseMode`、`Adaptive Cruise Disabled` 或 Panda 故障。
 
+## 停车首页
+
+- 左侧使用本机里程记录，不依赖 comma 云端上传。
+- 右侧保留驾驶模式按钮，移除 comma prime 订阅和 uploading 提示。
+- 右侧状态区显示车型识别、控制就绪、设备温度、风扇转速和可用存储。
+- 系统请求散热但风扇仍为 `0 RPM` 时，首页必须显示红色故障。
+
 ## 散热安全条件
 
 风扇是必要硬件，不得通过提高温度上限规避故障。

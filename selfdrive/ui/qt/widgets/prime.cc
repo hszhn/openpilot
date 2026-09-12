@@ -1,6 +1,7 @@
 #include "selfdrive/ui/qt/widgets/prime.h"
 
 #include <QDebug>
+#include <QGridLayout>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
@@ -176,111 +177,94 @@ PrimeAdWidget::PrimeAdWidget(QWidget* parent) : QFrame(parent) {
 
 
 SetupWidget::SetupWidget(QWidget* parent) : QFrame(parent) {
-  mainLayout = new QStackedWidget;
+  QVBoxLayout *mainLayout = new QVBoxLayout(this);
+  mainLayout->setContentsMargins(0, 0, 0, 0);
+  mainLayout->setSpacing(30);
 
-  // Unpaired, registration prompt layout
+  auto addStatusCard = [=](const QString &title, const QVector<QPair<QString, QLabel **>> &rows) {
+    QFrame *card = new QFrame(this);
+    card->setObjectName("statusCard");
+    QVBoxLayout *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(46, 30, 46, 30);
+    cardLayout->setSpacing(12);
 
-  QFrame* finishRegistration = new QFrame;
-  finishRegistration->setObjectName("primeWidget");
-  QVBoxLayout* finishRegistationLayout = new QVBoxLayout(finishRegistration);
-  finishRegistationLayout->setSpacing(38);
-  finishRegistationLayout->setContentsMargins(64, 48, 64, 48);
+    QLabel *heading = new QLabel(title, card);
+    heading->setProperty("type", "statusTitle");
+    cardLayout->addWidget(heading);
 
-  QLabel* registrationTitle = new QLabel(tr("Finish Setup"));
-  registrationTitle->setStyleSheet("font-size: 75px; font-weight: bold;");
-  finishRegistationLayout->addWidget(registrationTitle);
+    QGridLayout *grid = new QGridLayout;
+    grid->setHorizontalSpacing(24);
+    grid->setVerticalSpacing(10);
+    for (int row = 0; row < rows.size(); ++row) {
+      QLabel *name = new QLabel(rows[row].first, card);
+      name->setProperty("type", "statusName");
+      grid->addWidget(name, row, 0, Qt::AlignLeft);
 
-  QLabel* registrationDescription = new QLabel(useKonikServer() ? tr("Pair your device with Konik connect (stable.konik.ai).") : tr("Pair your device with comma connect (connect.comma.ai) and claim your comma prime offer."));
-  registrationDescription->setWordWrap(true);
-  registrationDescription->setStyleSheet("font-size: 50px; font-weight: light;");
-  finishRegistationLayout->addWidget(registrationDescription);
-
-  finishRegistationLayout->addStretch();
-
-  QPushButton* pair = new QPushButton(tr("Pair device"));
-  pair->setStyleSheet(R"(
-    QPushButton {
-      font-size: 55px;
-      font-weight: 500;
-      border-radius: 10px;
-      background-color: #465BEA;
-      padding: 64px;
+      *rows[row].second = new QLabel("--", card);
+      (*rows[row].second)->setProperty("type", "statusValue");
+      grid->addWidget(*rows[row].second, row, 1, Qt::AlignRight);
     }
-    QPushButton:pressed {
-      background-color: #3049F4;
-    }
-  )");
-  finishRegistationLayout->addWidget(pair);
+    grid->setColumnStretch(0, 1);
+    cardLayout->addLayout(grid);
+    mainLayout->addWidget(card, 1);
+  };
 
-  popup = new PairingPopup(this);
-  QObject::connect(pair, &QPushButton::clicked, popup, &PairingPopup::exec);
-
-  mainLayout->addWidget(finishRegistration);
-
-  // build stacked layout
-  QVBoxLayout *outer_layout = new QVBoxLayout(this);
-  outer_layout->setContentsMargins(0, 0, 0, 0);
-  outer_layout->addWidget(mainLayout);
-
-  QWidget *content = new QWidget;
-  QVBoxLayout *content_layout = new QVBoxLayout(content);
-  content_layout->setContentsMargins(0, 0, 0, 0);
-  content_layout->setSpacing(30);
-
-  primeUser = new PrimeUserWidget;
-  content_layout->addWidget(primeUser);
-
-  WiFiPromptWidget *wifi_prompt = new WiFiPromptWidget;
-  QObject::connect(wifi_prompt, &WiFiPromptWidget::openSettings, this, &SetupWidget::openSettings);
-  content_layout->addWidget(wifi_prompt);
-  content_layout->addStretch();
-
-  mainLayout->addWidget(content);
-
-  primeUser->setVisible(uiState()->hasPrime());
-  mainLayout->setCurrentIndex(1);
+  addStatusCard(tr("Vehicle Status"), {
+    {tr("Vehicle"), &carRecognition},
+    {tr("Control System"), &controlsReady},
+  });
+  addStatusCard(tr("Device Status"), {
+    {tr("Temperature"), &deviceTemperature},
+    {tr("Cooling Fan"), &fanStatus},
+    {tr("Storage Available"), &storageStatus},
+  });
 
   setStyleSheet(R"(
-    #primeWidget {
-      border-radius: 10px;
+    #statusCard {
+      border-radius: 8px;
       background-color: #333333;
     }
+    QLabel[type="statusTitle"] { font-size: 44px; font-weight: 600; color: #E5E5E5; }
+    QLabel[type="statusName"] { font-size: 36px; color: #A0A0A0; }
+    QLabel[type="statusValue"] { font-size: 38px; font-weight: 500; }
   )");
 
-  // Retain size while hidden
-  QSizePolicy sp_retain = sizePolicy();
-  sp_retain.setRetainSizeWhenHidden(true);
-  setSizePolicy(sp_retain);
-
-  // set up API requests
-  if (auto dongleId = getDongleId()) {
-    QString url = CommaApi::BASE_URL + "/v1.1/devices/" + *dongleId + "/";
-    RequestRepeater* repeater = new RequestRepeater(this, url, "ApiCache_Device", 5);
-
-    QObject::connect(repeater, &RequestRepeater::requestDone, this, &SetupWidget::replyFinished);
-  }
+  QTimer *statusTimer = new QTimer(this);
+  QObject::connect(statusTimer, &QTimer::timeout, this, &SetupWidget::refreshStatus);
+  statusTimer->start(1000);
+  refreshStatus();
 }
 
-void SetupWidget::replyFinished(const QString &response, bool success) {
-  if (!success) return;
+void SetupWidget::setStatus(QLabel *label, const QString &text, const QString &color) {
+  label->setText(text);
+  label->setStyleSheet("color: " + color + ";");
+}
 
-  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-  if (doc.isNull()) {
-    qDebug() << "JSON Parse failed on getting pairing and prime status";
-    return;
+void SetupWidget::refreshStatus() {
+  const SubMaster &sm = *uiState()->sm;
+  const bool recognized = !params.get("CarParamsPersistent").empty();
+  setStatus(carRecognition, recognized ? tr("2015 Buick Envision") : tr("Not Recognized"), recognized ? "#86FF4E" : "#FF6B6B");
+
+  const bool controls_ready = params.getBool("ControlsReady");
+  setStatus(controlsReady, controls_ready ? tr("Ready") : tr("Waiting for Vehicle"), controls_ready ? "#86FF4E" : "#F5C451");
+
+  if (sm.alive("deviceState")) {
+    const auto device_state = sm["deviceState"].getDeviceState();
+    const int max_temp = qRound(device_state.getMaxTempC());
+    const bool temp_warning = device_state.getThermalStatus() >= cereal::DeviceState::ThermalStatus::YELLOW;
+    setStatus(deviceTemperature, QString::number(max_temp) + "°C", temp_warning ? "#FF6B6B" : "#86FF4E");
+    setStatus(storageStatus, QString::number(qRound(device_state.getFreeSpacePercent())) + "%", "#FFFFFF");
+  } else {
+    setStatus(deviceTemperature, tr("Waiting for Data"), "#F5C451");
+    setStatus(storageStatus, tr("Waiting for Data"), "#F5C451");
   }
 
-  QJsonObject json = doc.object();
-  bool is_paired = json["is_paired"].toBool();
-  PrimeType prime_type = static_cast<PrimeType>(json["prime_type"].toInt());
-  uiState()->setPrimeType(is_paired ? prime_type : PrimeType::UNPAIRED);
-
-  if (!is_paired) {
-    mainLayout->setCurrentIndex(0);
+  if (sm.alive("peripheralState")) {
+    const int fan_rpm = sm["peripheralState"].getPeripheralState().getFanSpeedRpm();
+    const int fan_request = sm.alive("deviceState") ? sm["deviceState"].getDeviceState().getFanSpeedPercentDesired() : 0;
+    const bool fan_fault = fan_request > 0 && fan_rpm == 0;
+    setStatus(fanStatus, fan_fault ? tr("FAULT - 0 RPM") : QString::number(fan_rpm) + " RPM", fan_fault ? "#FF6B6B" : "#86FF4E");
   } else {
-    popup->reject();
-
-    primeUser->setVisible(uiState()->hasPrime());
-    mainLayout->setCurrentIndex(1);
+    setStatus(fanStatus, tr("Waiting for Data"), "#F5C451");
   }
 }
